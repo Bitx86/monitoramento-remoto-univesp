@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login - Controle de Temperatura</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='background.jpg') }}">
+<style>
+    .step{
+    opacity:0;
+    transform:translateX(30px);
+    transition: all 1s ease;
+    position:absolute;
+    width:100%;
+}
+
+.step.active{
+    opacity:1;
+    transform:translateX(0);
+    transition: all 1s ease;
+    position:relative;
+}
+
+.box {
+    position: relative;
+    overflow: hidden;
+}
+</style>
+
+</head>
+<body>
+    <section class="hero is-fullheight" style="background: url('{{ url_for('static', filename='background.jpg') }}') no-repeat center center fixed; background-size: cover;">
+        
+        <div class="hero-body">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="column is-5-tablet is-4-desktop is-3-widescreen">
+                        
+<div class="box shadow">
+
+    <div class="has-text-centered mb-5">
+        <h1 class="title is-4 has-text-grey-lighter">Sensoriamento remoto</h1>
+        <p class="subtitle is-6">Criar conta</p>
+    </div>
+
+    <!-- PASSO 1 -->
+    <div id="step1" class="step active">
+        <form id="formStep1">
+            <div class="field">
+                <label class="label">E-mail</label>
+                <div class="control has-icons-left">
+                    <input class="input" type="email" id="email" required>
+                    <span class="icon is-small is-left">
+                        <i class="fas fa-envelope"></i>
+                    </span>
+                </div>
+            </div>
+
+            <div class="field mt-5">
+                <button class="button is-primary is-fullwidth">
+                    <strong>Próximo passo</strong>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- PASSO 2 -->
+    <div id="step2" class="step">
+        <form id="formStep2">
+
+            <div class="field">
+                <label class="label">Nome</label>
+                <input id="nome" class="input" type="text" required>
+            </div>
+
+            <div class="field">
+                <label class="label">Sobrenome</label>
+                <input id="sobrenome" class="input" type="text" required>
+            </div>
+
+            <div class="field">
+                <label class="label">Senha</label>
+                <input id="senha" class="input" type="password" required>
+            </div>
+
+            <div class="field">
+                <label class="label">Repetir Senha</label>
+                <input id="senha2" class="input" type="password" required>
+            </div>
+            <div class="field mt-5">
+                <button id="bcriar" class="button is-disabled is-fullwidth" disabled>
+                    <strong>Criar conta</strong>
+                </button>
+            </div>
+
+            <div id="message" class="mt-4 is-hidden">
+                <div class="notification is-danger is-light p-2 has-text-centered">
+                    <small id="errorText"></small>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+
+            document.getElementById('senha2').addEventListener('input', (e) => {
+
+                const senha  = document.getElementById('senha').value;
+                const senha2 = e.target.value;
+                const botao  = document.getElementById('bcriar');
+
+                if (senha2 === senha) {
+                    botao.classList.remove('is-disabled');
+                    botao.classList.add('is-success');
+                    botao.disabled = false;
+                } else {
+                    botao.classList.remove('is-success');
+                    botao.classList.add('is-disabled');
+                    botao.disabled = true;
+                }
+
+            });
+
+        document.getElementById('formStep2').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nome       = document.getElementById('nome').value;
+            const sobrenome  = document.getElementById('sobrenome').value;
+            const senha      = document.getElementById('senha').value;
+            const senha2     = document.getElementById('senha2').value;
+            const email      = document.getElementById('email').value;
+            const messageDiv = document.getElementById('message');
+            const errorText  = document.getElementById('errorText');
+
+            if (senha != senha2) {
+                messageDiv.classList.remove('is-hidden');
+                errorText.innerText = 'Senha e Repetir Senha devem ser iguais.';
+                return;
+            }
+
+            try {
+                console.log("enviando request...");
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, sobrenome, email, senha })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('access_token', result.access_token);
+                    // Para o Flask ler no redirecionamento:
+                    document.cookie = `access_token=${result.access_token}; path=/; max-age=28800; SameSite=Lax`;
+                    window.location.href = '/login'; 
+                } else {
+                    messageDiv.classList.remove('is-hidden');
+                    errorText.innerText = result.error || 'Erro ao fazer login';
+                }
+            } catch (err) {
+                console.error(err);
+                messageDiv.classList.remove('is-hidden');
+                errorText.innerText = 'Servidor offline ou erro de conexão.';
+            }
+        });
+        document.getElementById("formStep1").addEventListener("submit", function(e){
+
+            e.preventDefault();
+
+            const step1 = document.getElementById("step1");
+            const step2 = document.getElementById("step2");
+
+            step1.classList.remove("active");
+
+            setTimeout(()=>{
+                step2.classList.add("active");
+            },150);
+
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Solicitação de Cadastro</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <section class="section is-fullheight">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-5-tablet is-4-desktop is-3-widescreen">
+                    
+                    <div class="box">
+                        <div class="has-text-centered mb-5">
+                            <h1 class="title is-4">Sensoriamento remoto</h1>
+                            <p class="subtitle is-6">Acesse sua conta</p>
+                        </div>
+
+                        <form id="loginForm">
+                            <div class="field">
+                                <label class="label">E-mail</label>
+                                <div class="control has-icons-left">
+                                    <input class="input" type="email" id="email" placeholder="seu@email.com" required>
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label class="label">Senha</label>
+                                <div class="control has-icons-left">
+                                    <input class="input" type="password" id="password" placeholder="*******" required>
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="field mt-5">
+                                <button type="submit" class="button is-primary is-fullwidth">
+                                    <strong>Entrar</strong>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div id="message" class="mt-4 is-hidden">
+                            <div class="notification is-danger is-light p-2 has-text-centered">
+                                <small id="errorText"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="has-text-centered is-size-7">
+                        Esqueceu a senha? <a href="#">Clique aqui</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Pequeno script para interceptar o login e enviar para o seu Flask
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            const errorText = document.getElementById('errorText');
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Armazena o JWT que o Flask devolveu
+                    localStorage.setItem('token', result.access_token);
+                    window.location.href = '/dashboard'; // Redireciona
+                } else {
+                    messageDiv.classList.remove('is-hidden');
+                    errorText.innerText = result.error || 'Erro ao fazer login';
+                }
+            } catch (err) {
+                messageDiv.classList.remove('is-hidden');
+                errorText.innerText = 'Servidor offline ou erro de conexão.';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Bulma</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/versions/bulma-no-dark-mode.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<style>
+.bg {
+    background: radial-gradient(circle at top, #ffffff 0%, #e5ebf0 100%);
+    background-attachment: fixed;
+}
+.dashboard-container {
+    background-color: #f8fafc;
+    /* Cria pontos de 1px a cada 24px */
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 24px 24px;
+    min-height: 100vh;
+    padding: 2rem;
+}
+.bg-institucional {
+    background-color: #f1f5f9;
+    background-image: repeating-linear-gradient(
+        45deg,
+        #f1f5f9,
+        #f1f5f9 10px,
+        #f8fafc 10px,
+        #f8fafc 11px
+    );
+}
+</style>
+<body class="bg">
+
+    <nav class="navbar is-dark">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="#">
+                <strong>Sensoriamento Remoto</strong>
+            </a>
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+
+        <div class="navbar-menu">
+            <div class="navbar-start">
+            </div>
+
+            <div class="navbar-end">
+                <a class="navbar-item">Notificações</a>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">Perfil</a>
+                    <div class="navbar-dropdown is-right">
+                        <a class="navbar-item">Configurações</a>
+                        <hr class="navbar-divider">
+                        <a class="navbar-item has-text-danger">Sair</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+<div class="container">
+    <section class="section">
+        <div class="columns">
+            <main class="column is-10">
+                <nav class="breadcrumb" aria-label="breadcrumbs">
+                    <ul>
+                        <li><a href="#">Admin</a></li>
+                        <li class="is-active"><a href="#" aria-current="page">Dashboard</a></li>
+                    </ul>
+                </nav>
+
+                <section class="level">
+                    <div class="level-item has-text-centered">
+                        <div>
+                            <p class="heading">Vendas</p>
+                            <p class="title">3,456</p>
+                        </div>
+                    </div>
+                    <div class="level-item has-text-centered">
+                        <div>
+                            <p class="heading">Seguidores</p>
+                            <p class="title">123K</p>
+                        </div>
+                    </div>
+                    <div class="level-item has-text-centered">
+                        <div>
+                            <p class="heading">Receita</p>
+                            <p class="title">R$ 450k</p>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="columns is-multiline">
+                    <div class="column is-6">
+                        <div class="card" >
+                            <header class="card-header">
+                                <p class="card-header-title">Ultimos 30 logs</p>
+                            </header>
+                            <div class="card-content">
+                                <div class="content" >
+                                    <div id="container-grafico" style="width: 100%; max-width: 800px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-6">
+                        <div class="card">
+                            <header class="card-header">
+                                <p class="card-header-title">Últimos Pedidos                                                             
+                            </header>
+                            <div class="card-content">
+
+                                <table class="table is-fullwidth is-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Produto</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>#1234</td>
+                                            <td>MacBook Pro</td>
+                                            <td><span class="tag is-success">Pago</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#1235</td>
+                                            <td>iPad Air</td>
+                                            <td><span class="tag is-warning">Pendente</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <footer class="card-footer">
+                                  <footer class="card-footer">
+                                    <a href="#" class="card-footer-item"><button class="button is-small">
+                                        <span class="icon">
+                                        <i class="fa-regular fa-file-lines"></i>
+                                        </span>
+                                        <span>Gerar relatório</span>
+                                </button></a>
+                                    <a href="#" class="card-footer-item"><button class="button is-small">
+                                        <span class="icon">
+                                        <i class="fa-solid fa-print"></i>
+                                        </span>
+                                        <span>Imprimir relatório</span>
+                                </button></a>
+                            </footer>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+        </div>
+    </section>
+{% if user_role == 'admin' or user_role == 'tecnico' %}
+    <section class="section">
+        <div class="columns">
+            <main class="column is-10">
+                    <div class="columns is-multiline">
+                    <div class="column is-6">
+                        <div class="card">
+                            <header class="card-header">
+                                <p class="card-header-title">Administração</p>
+                            </header>
+                            <div class="card-content">
+                                <div class="content">
+                                    {% if user_role == 'admin' or user_role == 'tecnico' %}
+                                    <button class="button is-medium is-fullwidth is-primary">Criar link de Cadastro</button>
+                                    <button class="button is-medium is-fullwidth is-primary">Adicionar Dispositivo</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="column is-6">
+                        <div class="card">
+                            <header class="card-header">
+                                <p class="card-header-title">Usuários</p>
+                            </header>
+                            <div class="card-content">
+                                <div class="content">
+                                <table class="table is-fullwidth is-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>E-mail</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Fabio Carvalho Vila</td>
+                                            <td>MacBook Pro</td>
+                                            <td><span class="tag is-success">Pago</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#1235</td>
+                                            <td>iPad Air</td>
+                                            <td><span class="tag is-warning">Pendente</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+            </main>
+        </div>
+    </section>
+{% endif %}
+</div>
+</body>
+<script>
+async function renderizarGraficoSVG() {
+    const res = await fetch('/api/dados-grafico');
+    const { valores } = await res.json(); // Ex: [-20, 10, 45, -5, 30...]
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const largura = 800;
+    const altura = 300;
+    const padding = 40; // Espaço para as legendas/números
+    
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${largura} ${altura}`);
+    svg.style.width = "100%";
+    svg.style.height = "auto";
+
+    // 1. Cálculos de Escala
+    const minVal = Math.min(...valores, 0); // Garante que o zero apareça
+    const maxVal = Math.max(...valores, 0);
+    const range = maxVal - minVal;
+    
+    const getX = (i) => padding + (i * (largura - 2 * padding) / (valores.length - 1));
+    const getY = (v) => (altura - padding) - ((v - minVal) / range) * (altura - 2 * padding);
+
+    // 2. Desenhar Grade e Legendas (Y)
+    const numLinhas = 5;
+    for (let i = 0; i <= numLinhas; i++) {
+        const valorLinha = minVal + (range / numLinhas) * i;
+        const y = getY(valorLinha);
+        
+        // Linha da grade
+        const linha = document.createElementNS(svgNS, "line");
+        linha.setAttribute("x1", padding);
+        linha.setAttribute("y1", y);
+        linha.setAttribute("x2", largura - padding);
+        linha.setAttribute("y2", y);
+        linha.setAttribute("stroke", valorLinha === 0 ? "#333" : "#aaa"); // Linha zero mais escura
+        linha.setAttribute("stroke-width", valorLinha === 0 ? "2" : "1");
+        svg.appendChild(linha);
+
+        // Texto da legenda
+        const texto = document.createElementNS(svgNS, "text");
+        texto.setAttribute("x", padding - 5);
+        texto.setAttribute("y", y + 4);
+        texto.setAttribute("text-anchor", "end");
+        texto.setAttribute("font-size", "14");
+        texto.setAttribute("fill", "#333");
+        texto.textContent = Math.round(valorLinha);
+        svg.appendChild(texto);
+    }
+
+    // 3. Criar a Curva "Macia" (Smoothing)
+    let d = `M ${getX(0)} ${getY(valores[0])}`;
+    
+    for (let i = 0; i < valores.length - 1; i++) {
+        const x1 = getX(i);
+        const y1 = getY(valores[i]);
+        const x2 = getX(i + 1);
+        const y2 = getY(valores[i+1]);
+        
+        // Pontos de controle para a curva suave
+        const cp1x = x1 + (x2 - x1) / 2;
+        const cp2x = x1 + (x2 - x1) / 2;
+        
+        d += ` C ${cp1x} ${y1}, ${cp2x} ${y2}, ${x2} ${y2}`;
+    }
+
+    const path = document.createElementNS(svgNS, "path");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "#4A90E2");
+    path.setAttribute("stroke-width", "3");
+    path.setAttribute("stroke-linecap", "round");
+    path.classList.add("path-animado"); // Para animação CSS
+
+    svg.appendChild(path);
+    document.getElementById('container-grafico').innerHTML = ""; // Limpa anterior
+    document.getElementById('container-grafico').appendChild(svg);
+}
+
+renderizarGraficoSVG();
+</script>
+</html>

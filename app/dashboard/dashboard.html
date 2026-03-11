@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard IoT</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h2>Seus dispositivos</h2>
+<ul id="devices-list"></ul>
+
+<canvas id="chart" width="400" height="200"></canvas>
+
+<script>
+const token = localStorage.getItem("token");
+
+async function loadDevices() {
+  const res = await fetch("https://SEU_BACKEND/devices", {
+    headers: { "Authorization": "Bearer " + token }
+  });
+  const devices = await res.json();
+  const ul = document.getElementById("devices-list");
+  devices.forEach(d => {
+    const li = document.createElement("li");
+    li.textContent = d.name;
+    ul.appendChild(li);
+  });
+}
+
+loadDevices();
+</script>
+</body>
+</html>

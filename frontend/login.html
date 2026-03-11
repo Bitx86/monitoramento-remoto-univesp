@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login SaaS IoT</title>
+  <style>
+    body { font-family: Arial; display: flex; height: 100vh; justify-content: center; align-items: center; }
+    .login-container { width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+    input { width: 100%; padding: 8px; margin: 5px 0; }
+    button { width: 100%; padding: 8px; margin-top: 10px; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Senha" required>
+    <button onclick="login()">Entrar</button>
+    <p class="error" id="error-msg"></p>
+  </div>
+
+  <script>
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const errorMsg = document.getElementById("error-msg");
+
+      try {
+        const res = await fetch("https://SEU_BACKEND/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorMsg.textContent = data.error;
+          return;
+        }
+
+        // Armazena token JWT no localStorage
+        localStorage.setItem("token", data.token);
+
+        // Redireciona para dashboard
+        window.location.href = "dashboard.html";
+
+      } catch (err) {
+        errorMsg.textContent = "Erro de conexão com o servidor.";
+      }
+    }
+  </script>
+</body>
+</html>
