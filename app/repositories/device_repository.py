@@ -11,13 +11,13 @@ def get_devices_by_user(user_id):
     conn.close()
     return devices
 
-def create_device(user_id, name):
+def create_device(user_id, device_id, name, device_secret_hash):
     conn = psycopg2.connect(**DB_CONFIG)
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO users (user_id, nome)
-        VALUES (%s, %s)
-    """, (user_id, nome))
+        INSERT INTO devices (user_id, device_id, name, device_secret_hash)
+        VALUES (%s, %s, %s, %s)
+    """, (user_id, device_id, name, device_secret_hash))
     conn.commit()
     cur.close()
     conn.close()

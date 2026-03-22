@@ -47,6 +47,7 @@ def create_user(nome, sobrenome, email, password_hash, role="tecnicos"):
                 
                 user_id = cur.fetchone()[0]
                 conn.commit() # Salva as alterações
+                app.logger.info(f"Criado o usuário {nome} {email}")
                 return user_id
     except psycopg2.IntegrityError:
         logging.warning(f"Tentativa de criar usuário com email duplicado: {email}")

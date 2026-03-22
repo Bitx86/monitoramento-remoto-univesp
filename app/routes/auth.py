@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template, request, g
+from flask import Blueprint, request, jsonify, render_template, request, g, current_app
 from uuid import uuid4
 from app.repositories.user_repository import get_user_by_email, create_user
 from app.utils.hash_utils import hash_password, check_password
@@ -38,6 +38,7 @@ def login():
         return jsonify({"error": "Email ou senha incorretos"}), 401
 
     token = create_jwt(user["id"], user["role"])
+    current_app.logger.info(f"Login do usuário {email}")
     return jsonify({"access_token": token})
 
 @auth_bp.route("/signup", methods=["GET"])

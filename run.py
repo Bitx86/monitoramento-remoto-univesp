@@ -1,4 +1,8 @@
-from flask import Flask
+import logging
+import time
+from logging.handlers import RotatingFileHandler
+from flask import Flask, request, g
+
 from app.routes.auth import auth_bp
 from app.routes.devices import devices_bp
 from app.routes.temperature import temperature_bp
@@ -11,6 +15,27 @@ from dotenv import load_dotenv
 import os
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 1024 * 100
+
+# ----------------------
+# logging para arquivo
+# ----------------------
+
+handler = RotatingFileHandler(
+    "/var/log/vacinas/vacinas.log",
+    maxBytes=2_000_000,
+    backupCount=10
+)
+
+formatter = logging.Formatter(
+    "%(asctime)s [%(levelname)s] %(message)s"
+)
+
+handler.setFormatter(formatter)
+handler.setLevel(logging.INFO)
+
+app.logger.addHandler(handler)
+app.logger.setLevel(logging.INFO)
 
 limiter.init_app(app)
 
@@ -32,6 +57,31 @@ app.register_blueprint(temperature_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(historico_bp)
+
+
+# ----------------------
+# log de request
+# ----------------------
+
+@app.before_request
+def start_timer():
+    g.start = time.time()
+
+
+@app.after_request
+def log_request(response):
+
+    duration = time.time() - g.start
+
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    method = request.method
+    path = request.path
+    status = response.status_code
+
+    app.logger.info(
+        f"{ip} {method} {path} {status} {duration:.3f}s"
+    )
+    return response
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=app.config["LISTEN_PORT"], debug=False)

@@ -158,7 +158,7 @@
 
         </div>
     </section>
-{% if user_role == 'admin' or user_role == 'tecnico' %}
+{% if user_role == 'admin' or user_role == 'tecnicos' %}
     <section class="section">
         <div class="columns">
             <main class="column is-10">
@@ -166,13 +166,16 @@
                     <div class="column is-6">
                         <div class="card">
                             <header class="card-header">
-                                <p class="card-header-title">Administração</p>
+                                <p class="card-header-title">Administração{% if user_role == 'admin' or user_role == 'tecnicos' %} - {{user_id}}{%endif%}</p> 
+                                
                             </header>
                             <div class="card-content">
-                                <div class="content">
-                                    {% if user_role == 'admin' or user_role == 'tecnico' %}
-                                    <button class="button is-medium is-fullwidth is-primary">Criar link de Cadastro</button>
-                                    <button class="button is-medium is-fullwidth is-primary">Adicionar Dispositivo</button>
+                                <div class="buttons">
+                                    {% if user_role == 'admin' or user_role == 'tecnicos' %}
+                                    
+                                    <button class="button is-medium is-fullwidth is-primary" onclick="abrirModal()">
+                                        Adicionar Dispositivo
+                                    </button>
                                     {% endif %}
                                 </div>
                             </div>
@@ -216,8 +219,112 @@
     </section>
 {% endif %}
 </div>
+<div id="modal-device" class="modal">
+  <div class="modal-background" onclick="fecharModal()"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Novo Dispositivo</p>
+      <button class="delete" onclick="fecharModal()"></button>
+    </header>
+
+    <section class="modal-card-body">
+      <div class="field">
+        <label class="label">Nome</label>
+        <div class="control">
+          <input id="device-name" class="input" placeholder="Ex: Sensor Sala">
+        </div>
+      </div>
+
+      <div id="resultado-device"></div>
+    </section>
+
+    <footer class="modal-card-foot">
+      <button class="button is-success" onclick="criarDevice()">Criar</button>
+      <button class="button" onclick="fecharModal()">Cancelar</button>
+    </footer>
+  </div>
+</div>
 </body>
 <script>
+function abrirModal() {
+    document.getElementById("modal-device").classList.add("is-active");
+}
+
+function fecharModal() {
+    document.getElementById("modal-device").classList.remove("is-active");
+}
+
+async function criarDevice() {
+    document.getElementById("resultado-device").innerHTML = "";
+    const name = document.getElementById("device-name").value;
+
+    if (name == "") return;
+
+    const res = await fetch('/api/devices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (res.ok) {    
+    console.log(data);
+    const config = {
+        device_id: data.device_id,
+        secret: data.secret,
+        broker: data.broker,
+        port: data.port,
+        topic_base: data.topic,
+        cert: data.cert
+    };
+    const jsonStr = JSON.stringify(config, null, 2);
+    window._deviceConfigJSON = jsonStr;
+
+    document.getElementById("resultado-device").innerHTML = `
+        <h3 class="title">Configuração do dispositivo</h3>
+        <div class="notification is-dark">
+            <div style="margin-bottom: 0.5rem;">
+                <button class="button is-small is-light" onclick='copiarConfig()'>
+                    Copiar
+                </button>
+                <button class="button is-small is-link" onclick='baixarConfig()'>
+                    Salvar JSON
+                </button>
+            </div>
+
+            <pre id="json-config" style="
+                background:#0b0f14;
+                color:#00ff9c;
+                padding:1rem;
+                border-radius:6px;
+                overflow:auto;
+                font-size:0.9rem;
+            ">${jsonStr}</pre>
+        </div>
+    `;
+    } else {
+     document.getElementById("resultado-device").innerHTML = `<div class="notification is-danger">
+    Erro: ${JSON.stringify(data, null, 2)}</div>`;
+    }
+
+
+}
+
+function copiarConfig() {
+    navigator.clipboard.writeText(window._deviceConfigJSON);
+}
+
+function baixarConfig() {
+    const blob = new Blob([window._deviceConfigJSON], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "device-config.json";
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
 async function renderizarGraficoSVG() {
     const res = await fetch('/api/dados-grafico');
     const { valores } = await res.json(); // Ex: [-20, 10, 45, -5, 30...]
