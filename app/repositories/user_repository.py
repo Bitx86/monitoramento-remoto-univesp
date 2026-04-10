@@ -5,6 +5,7 @@ import logging
 import jwt
 import datetime
 from app.utils.criptografias import criptografar
+from app.repositories.db_repository import get_db_connection
 from os import getenv
 
 
@@ -21,9 +22,6 @@ def generate_invite_url(email_destinatario):
 
     return url
 
-def get_db_connection():
-    # Centraliza a conexão para facilitar manutenção
-    return psycopg2.connect(**DB_CONFIG)
 
 def get_user_by_email(email):
     try:
@@ -47,7 +45,7 @@ def create_user(nome, sobrenome, email, password_hash, role="tecnicos"):
                 
                 user_id = cur.fetchone()[0]
                 conn.commit() # Salva as alterações
-                app.logger.info(f"Criado o usuário {nome} {email}")
+                logging.info(f"Criado o usuário {nome} {email}")
                 return user_id
     except psycopg2.IntegrityError:
         logging.warning(f"Tentativa de criar usuário com email duplicado: {email}")

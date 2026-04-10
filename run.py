@@ -11,6 +11,8 @@ from app.routes.dashboard   import dashboard_bp
 from app.routes.historico   import historico_bp
 from app.extensions.limiter     import limiter
 
+
+
 from dotenv import load_dotenv
 import os
 

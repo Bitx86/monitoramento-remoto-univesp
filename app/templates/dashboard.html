@@ -76,20 +76,20 @@
                 <section class="level">
                     <div class="level-item has-text-centered">
                         <div>
-                            <p class="heading">Vendas</p>
-                            <p class="title">3,456</p>
+                            <p class="heading">Dispositivos</p>
+                            <p id="dispositivos" class="title"></p>
                         </div>
                     </div>
                     <div class="level-item has-text-centered">
                         <div>
-                            <p class="heading">Seguidores</p>
-                            <p class="title">123K</p>
+                            <p class="heading"></p>
+                            <p class="title"></p>
                         </div>
                     </div>
                     <div class="level-item has-text-centered">
                         <div>
-                            <p class="heading">Receita</p>
-                            <p class="title">R$ 450k</p>
+                            <p class="heading"></p>
+                            <p class="title"></p>
                         </div>
                     </div>
                 </section>
@@ -110,29 +110,21 @@
                     <div class="column is-6">
                         <div class="card">
                             <header class="card-header">
-                                <p class="card-header-title">Últimos Pedidos                                                             
+                                <p class="card-header-title">Dispositivos                                                            
                             </header>
                             <div class="card-content">
 
                                 <table class="table is-fullwidth is-striped">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Produto</th>
-                                            <th>Status</th>
+                                            <th>Dispositivo</th>
+                                            <th>Logs</th>
+                                            <th>Mín</th>
+                                            <th>Máx</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>#1234</td>
-                                            <td>MacBook Pro</td>
-                                            <td><span class="tag is-success">Pago</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>#1235</td>
-                                            <td>iPad Air</td>
-                                            <td><span class="tag is-warning">Pendente</span></td>
-                                        </tr>
+                                    <tbody id="tabela-devices"></tbody>
+
                                     </tbody>
                                 </table>
                             </div>
@@ -182,36 +174,7 @@
                         </div>
                     </div>
                      <div class="column is-6">
-                        <div class="card">
-                            <header class="card-header">
-                                <p class="card-header-title">Usuários</p>
-                            </header>
-                            <div class="card-content">
-                                <div class="content">
-                                <table class="table is-fullwidth is-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Nome</th>
-                                            <th>E-mail</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Fabio Carvalho Vila</td>
-                                            <td>MacBook Pro</td>
-                                            <td><span class="tag is-success">Pago</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>#1235</td>
-                                            <td>iPad Air</td>
-                                            <td><span class="tag is-warning">Pendente</span></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                     </div>
             </main>
@@ -327,80 +290,112 @@ function baixarConfig() {
 
 async function renderizarGraficoSVG() {
     const res = await fetch('/api/dados-grafico');
-    const { valores } = await res.json(); // Ex: [-20, 10, 45, -5, 30...]
+    const { devices } = await res.json();
 
     const svgNS = "http://www.w3.org/2000/svg";
     const largura = 800;
     const altura = 300;
-    const padding = 40; // Espaço para as legendas/números
-    
+    const padding = 40;
+
     const svg = document.createElementNS(svgNS, "svg");
+   
     svg.setAttribute("viewBox", `0 0 ${largura} ${altura}`);
     svg.style.width = "100%";
-    svg.style.height = "auto";
 
-    // 1. Cálculos de Escala
-    const minVal = Math.min(...valores, 0); // Garante que o zero apareça
-    const maxVal = Math.max(...valores, 0);
-    const range = maxVal - minVal;
-    
-    const getX = (i) => padding + (i * (largura - 2 * padding) / (valores.length - 1));
-    const getY = (v) => (altura - padding) - ((v - minVal) / range) * (altura - 2 * padding);
+    // Junta todos os valores para escala global
+    let todosValores = [];
+    Object.values(devices).forEach(d => {
+        todosValores.push(...d.valores);
+    });
 
-    // 2. Desenhar Grade e Legendas (Y)
+    if (todosValores.length === 0) return;
+
+    const minVal = Math.min(...todosValores, 0);
+    const maxVal = Math.max(...todosValores, 0);
+    const range = maxVal - minVal || 1;
+
+    const getX = (i, total) =>
+        padding + (i * (largura - 2 * padding) / (total - 1 || 1));
+
+    const getY = (v) =>
+        (altura - padding) - ((v - minVal) / range) * (altura - 2 * padding);
+
+    // Grid Y
     const numLinhas = 5;
     for (let i = 0; i <= numLinhas; i++) {
         const valorLinha = minVal + (range / numLinhas) * i;
         const y = getY(valorLinha);
-        
-        // Linha da grade
+
         const linha = document.createElementNS(svgNS, "line");
         linha.setAttribute("x1", padding);
         linha.setAttribute("y1", y);
         linha.setAttribute("x2", largura - padding);
         linha.setAttribute("y2", y);
-        linha.setAttribute("stroke", valorLinha === 0 ? "#333" : "#aaa"); // Linha zero mais escura
-        linha.setAttribute("stroke-width", valorLinha === 0 ? "2" : "1");
+        linha.setAttribute("stroke", valorLinha === 0 ? "#333" : "#aaa");
         svg.appendChild(linha);
-
-        // Texto da legenda
-        const texto = document.createElementNS(svgNS, "text");
-        texto.setAttribute("x", padding - 5);
-        texto.setAttribute("y", y + 4);
-        texto.setAttribute("text-anchor", "end");
-        texto.setAttribute("font-size", "14");
-        texto.setAttribute("fill", "#333");
-        texto.textContent = Math.round(valorLinha);
-        svg.appendChild(texto);
     }
 
-    // 3. Criar a Curva "Macia" (Smoothing)
-    let d = `M ${getX(0)} ${getY(valores[0])}`;
-    
-    for (let i = 0; i < valores.length - 1; i++) {
-        const x1 = getX(i);
-        const y1 = getY(valores[i]);
-        const x2 = getX(i + 1);
-        const y2 = getY(valores[i+1]);
-        
-        // Pontos de controle para a curva suave
-        const cp1x = x1 + (x2 - x1) / 2;
-        const cp2x = x1 + (x2 - x1) / 2;
-        
-        d += ` C ${cp1x} ${y1}, ${cp2x} ${y2}, ${x2} ${y2}`;
+    const dispositivo = document.getElementById("dispositivos");
+    const quantidade = Object.keys(devices).length;
+    dispositivo.innerHTML = quantidade;
+    // tabela
+    const tbody = document.getElementById("tabela-devices");
+
+    if (tbody) tbody.innerHTML = "";
+
+    const cores = ["#4A90E2", "#E94E77", "#50E3C2", "#F5A623", "#9B59B6"];
+    let corIndex = 0;
+
+    // desenha + tabela
+    for (const [id, device] of Object.entries(devices)) {
+        const valores = device.valores || [];
+
+        // ===== tabela =====
+        if (tbody) {
+            const total = valores.length;
+            const min = total ? Math.min(...valores) : "-";
+            const max = total ? Math.max(...valores) : "-";
+            const nome = device.info?.name || device.info?.device_id || id;
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${nome}</td>
+                <td>${total}</td>
+                <td>${min}</td>
+                <td>${max}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // ===== gráfico =====
+        if (valores.length < 2) continue;
+
+        let d = `M ${getX(0, valores.length)} ${getY(valores[0])}`;
+
+        for (let i = 0; i < valores.length - 1; i++) {
+            const x1 = getX(i, valores.length);
+            const y1 = getY(valores[i]);
+            const x2 = getX(i + 1, valores.length);
+            const y2 = getY(valores[i + 1]);
+
+            const cpX = x1 + (x2 - x1) / 2;
+            d += ` C ${cpX} ${y1}, ${cpX} ${y2}, ${x2} ${y2}`;
+        }
+
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", d);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", cores[corIndex % cores.length]);
+        path.setAttribute("stroke-width", "3");
+
+        svg.appendChild(path);
+
+        corIndex++;
     }
 
-    const path = document.createElementNS(svgNS, "path");
-    path.setAttribute("d", d);
-    path.setAttribute("fill", "none");
-    path.setAttribute("stroke", "#4A90E2");
-    path.setAttribute("stroke-width", "3");
-    path.setAttribute("stroke-linecap", "round");
-    path.classList.add("path-animado"); // Para animação CSS
-
-    svg.appendChild(path);
-    document.getElementById('container-grafico').innerHTML = ""; // Limpa anterior
-    document.getElementById('container-grafico').appendChild(svg);
+    const container = document.getElementById('container-grafico');
+    container.innerHTML = "";
+    container.appendChild(svg);
 }
 
 renderizarGraficoSVG();
