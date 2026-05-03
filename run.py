@@ -50,7 +50,7 @@ app.config["DB_PASS"] = os.getenv("DB_PASS")
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 app.config["CHAVE_CRIPTOGRAFIA"] = os.getenv("CHAVE_CRIPTOGRAFIA")
 app.config["URL_SITE"] = os.getenv("URL_SITE")
-app.config["LISTEN_PORT"] = os.getenv("LISTEN_PORT")
+app.config["LISTEN_PORT"] = int(os.getenv("LISTEN_PORT", 5000))
 app.config["DB_HOST"] = os.getenv("DB_HOST")
 
 app.register_blueprint(auth_bp)
@@ -70,19 +70,44 @@ def start_timer():
     g.start = time.time()
 
 
+@app.before_request
+def start_timer():
+    g.start = time.time()
+
+
 @app.after_request
 def log_request(response):
 
-    duration = time.time() - g.start
+    try:
 
-    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
-    method = request.method
-    path = request.path
-    status = response.status_code
+        start = getattr(g, "start", None)
 
-    app.logger.info(
-        f"{ip} {method} {path} {status} {duration:.3f}s"
-    )
+        duration = (
+            time.time() - start
+            if start is not None
+            else 0
+        )
+
+        ip = request.headers.get(
+            "X-Forwarded-For",
+            request.remote_addr
+        )
+
+        method = request.method
+        path = request.path
+        status = response.status_code
+
+        app.logger.info(
+            f"{ip} {method} {path} "
+            f"{status} {duration:.3f}s"
+        )
+
+    except Exception as e:
+
+        app.logger.error(
+            f"erro log_request: {e}"
+        )
+
     return response
 
 if __name__ == "__main__":

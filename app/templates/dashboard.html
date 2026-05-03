@@ -289,115 +289,325 @@ function baixarConfig() {
 }
 
 async function renderizarGraficoSVG() {
-    const res = await fetch('/api/dados-grafico');
-    const { devices } = await res.json();
 
-    const svgNS = "http://www.w3.org/2000/svg";
-    const largura = 800;
-    const altura = 300;
-    const padding = 40;
+    try {
 
-    const svg = document.createElementNS(svgNS, "svg");
-   
-    svg.setAttribute("viewBox", `0 0 ${largura} ${altura}`);
-    svg.style.width = "100%";
+        const res = await fetch('/api/dados-grafico');
+        const { devices } = await res.json();
 
-    // Junta todos os valores para escala global
-    let todosValores = [];
-    Object.values(devices).forEach(d => {
-        todosValores.push(...d.valores);
-    });
+        const svgNS = "http://www.w3.org/2000/svg";
 
-    if (todosValores.length === 0) return;
+        const largura = 800;
+        const altura = 350;
 
-    const minVal = Math.min(...todosValores, 0);
-    const maxVal = Math.max(...todosValores, 0);
-    const range = maxVal - minVal || 1;
+        const paddingLeft = 60;
+        const paddingBottom = 40;
+        const paddingTop = 20;
+        const paddingRight = 20;
 
-    const getX = (i, total) =>
-        padding + (i * (largura - 2 * padding) / (total - 1 || 1));
+        const svg = document.createElementNS(svgNS, "svg");
 
-    const getY = (v) =>
-        (altura - padding) - ((v - minVal) / range) * (altura - 2 * padding);
+        svg.setAttribute("viewBox", `0 0 ${largura} ${altura}`);
+        svg.style.width = "100%";
 
-    // Grid Y
-    const numLinhas = 5;
-    for (let i = 0; i <= numLinhas; i++) {
-        const valorLinha = minVal + (range / numLinhas) * i;
-        const y = getY(valorLinha);
+        // =========================
+        // coleta todos os valores
+        // =========================
 
-        const linha = document.createElementNS(svgNS, "line");
-        linha.setAttribute("x1", padding);
-        linha.setAttribute("y1", y);
-        linha.setAttribute("x2", largura - padding);
-        linha.setAttribute("y2", y);
-        linha.setAttribute("stroke", valorLinha === 0 ? "#333" : "#aaa");
-        svg.appendChild(linha);
-    }
+        let todosValores = [];
 
-    const dispositivo = document.getElementById("dispositivos");
-    const quantidade = Object.keys(devices).length;
-    dispositivo.innerHTML = quantidade;
-    // tabela
-    const tbody = document.getElementById("tabela-devices");
+        Object.values(devices).forEach(d => {
+            todosValores.push(...d.valores);
+        });
 
-    if (tbody) tbody.innerHTML = "";
+        if (todosValores.length === 0) {
+            return;
+        }
 
-    const cores = ["#4A90E2", "#E94E77", "#50E3C2", "#F5A623", "#9B59B6"];
-    let corIndex = 0;
+        let minVal = Math.min(...todosValores);
+        let maxVal = Math.max(...todosValores);
 
-    // desenha + tabela
-    for (const [id, device] of Object.entries(devices)) {
-        const valores = device.valores || [];
+        // margem visual
+        minVal -= 1;
+        maxVal += 1;
 
-        // ===== tabela =====
-        if (tbody) {
+        const range = maxVal - minVal || 1;
+
+        const plotWidth =
+            largura - paddingLeft - paddingRight;
+
+        const plotHeight =
+            altura - paddingTop - paddingBottom;
+
+        const getX = (i, total) =>
+            paddingLeft +
+            (i * plotWidth / ((total - 1) || 1));
+
+        const getY = (v) =>
+            paddingTop +
+            (plotHeight - ((v - minVal) / range) * plotHeight);
+
+        // =========================
+        // fundo
+        // =========================
+
+        const fundo = document.createElementNS(svgNS, "rect");
+
+        fundo.setAttribute("x", 0);
+        fundo.setAttribute("y", 0);
+        fundo.setAttribute("width", largura);
+        fundo.setAttribute("height", altura);
+        fundo.setAttribute("fill", "#ffffff");
+
+        svg.appendChild(fundo);
+
+        // =========================
+        // grid + escala Y
+        // =========================
+
+        const linhasY = 6;
+
+        for (let i = 0; i <= linhasY; i++) {
+
+            const valor =
+                minVal + (range / linhasY) * i;
+
+            const y = getY(valor);
+
+            const linha = document.createElementNS(svgNS, "line");
+
+            linha.setAttribute("x1", paddingLeft);
+            linha.setAttribute("y1", y);
+
+            linha.setAttribute("x2", largura - paddingRight);
+            linha.setAttribute("y2", y);
+
+            linha.setAttribute("stroke", "#dbe2ea");
+            linha.setAttribute("stroke-width", "1");
+
+            svg.appendChild(linha);
+
+            // label Y
+            const texto = document.createElementNS(svgNS, "text");
+
+            texto.setAttribute("x", paddingLeft - 10);
+            texto.setAttribute("y", y + 4);
+
+            texto.setAttribute("text-anchor", "end");
+            texto.setAttribute("font-size", "11");
+            texto.setAttribute("fill", "#444");
+
+            texto.textContent = valor.toFixed(1);
+
+            svg.appendChild(texto);
+        }
+
+        // =========================
+        // eixo X
+        // =========================
+
+        const eixoX = document.createElementNS(svgNS, "line");
+
+        eixoX.setAttribute("x1", paddingLeft);
+        eixoX.setAttribute("y1", altura - paddingBottom);
+
+        eixoX.setAttribute("x2", largura - paddingRight);
+        eixoX.setAttribute("y2", altura - paddingBottom);
+
+        eixoX.setAttribute("stroke", "#333");
+
+        svg.appendChild(eixoX);
+
+        // =========================
+        // eixo Y
+        // =========================
+
+        const eixoY = document.createElementNS(svgNS, "line");
+
+        eixoY.setAttribute("x1", paddingLeft);
+        eixoY.setAttribute("y1", paddingTop);
+
+        eixoY.setAttribute("x2", paddingLeft);
+        eixoY.setAttribute("y2", altura - paddingBottom);
+
+        eixoY.setAttribute("stroke", "#333");
+
+        svg.appendChild(eixoY);
+
+        // =========================
+        // info dashboard
+        // =========================
+
+        const dispositivo =
+            document.getElementById("dispositivos");
+
+        dispositivo.innerHTML =
+            Object.keys(devices).length;
+
+        // =========================
+        // tabela
+        // =========================
+
+        const tbody =
+            document.getElementById("tabela-devices");
+
+        tbody.innerHTML = "";
+
+        const cores = [
+            "#4A90E2",
+            "#E94E77",
+            "#50E3C2",
+            "#F5A623",
+            "#9B59B6",
+            "#16a34a",
+            "#ef4444"
+        ];
+
+        let corIndex = 0;
+
+        // =========================
+        // desenha devices
+        // =========================
+
+        for (const [id, device] of Object.entries(devices)) {
+
+            const valores = device.valores || [];
+
+            const nome =
+                device.info?.name ||
+                device.info?.device_id ||
+                id;
+
+            // ===== tabela =====
+
             const total = valores.length;
-            const min = total ? Math.min(...valores) : "-";
-            const max = total ? Math.max(...valores) : "-";
-            const nome = device.info?.name || device.info?.device_id || id;
+
+            const min =
+                total ? Math.min(...valores) : "-";
+
+            const max =
+                total ? Math.max(...valores) : "-";
 
             const tr = document.createElement("tr");
+
             tr.innerHTML = `
                 <td>${nome}</td>
                 <td>${total}</td>
                 <td>${min}</td>
                 <td>${max}</td>
             `;
+
             tbody.appendChild(tr);
+
+            // ===== gráfico =====
+
+            if (valores.length < 2) {
+                continue;
+            }
+
+            let d =
+                `M ${getX(0, valores.length)} ${getY(valores[0])}`;
+
+            for (let i = 0; i < valores.length - 1; i++) {
+
+                const x1 = getX(i, valores.length);
+                const y1 = getY(valores[i]);
+
+                const x2 = getX(i + 1, valores.length);
+                const y2 = getY(valores[i + 1]);
+
+                const cpX =
+                    x1 + (x2 - x1) / 2;
+
+                d +=
+                    ` C ${cpX} ${y1}, ${cpX} ${y2}, ${x2} ${y2}`;
+            }
+
+            const cor =
+                cores[corIndex % cores.length];
+
+            // linha
+            const path =
+                document.createElementNS(svgNS, "path");
+
+            path.setAttribute("d", d);
+            path.setAttribute("fill", "none");
+
+            path.setAttribute("stroke", cor);
+            path.setAttribute("stroke-width", "3");
+
+            svg.appendChild(path);
+
+            // pontos
+            valores.forEach((v, i) => {
+
+                const circle =
+                    document.createElementNS(svgNS, "circle");
+
+                circle.setAttribute("cx",
+                    getX(i, valores.length));
+
+                circle.setAttribute("cy",
+                    getY(v));
+
+                circle.setAttribute("r", "3");
+
+                circle.setAttribute("fill", cor);
+
+                svg.appendChild(circle);
+            });
+
+            // último valor
+            const ultimo =
+                valores[valores.length - 1];
+
+            const label =
+                document.createElementNS(svgNS, "text");
+
+            label.setAttribute(
+                "x",
+                getX(valores.length - 1, valores.length) + 8
+            );
+
+            label.setAttribute(
+                "y",
+                getY(ultimo)
+            );
+
+            label.setAttribute("font-size", "11");
+            label.setAttribute("fill", cor);
+
+            label.textContent =
+                `${nome}: ${ultimo}`;
+
+            svg.appendChild(label);
+
+            corIndex++;
         }
 
-        // ===== gráfico =====
-        if (valores.length < 2) continue;
+        // =========================
+        // renderiza
+        // =========================
 
-        let d = `M ${getX(0, valores.length)} ${getY(valores[0])}`;
+        const container =
+            document.getElementById("container-grafico");
 
-        for (let i = 0; i < valores.length - 1; i++) {
-            const x1 = getX(i, valores.length);
-            const y1 = getY(valores[i]);
-            const x2 = getX(i + 1, valores.length);
-            const y2 = getY(valores[i + 1]);
+        container.innerHTML = "";
 
-            const cpX = x1 + (x2 - x1) / 2;
-            d += ` C ${cpX} ${y1}, ${cpX} ${y2}, ${x2} ${y2}`;
-        }
+        container.appendChild(svg);
 
-        const path = document.createElementNS(svgNS, "path");
-        path.setAttribute("d", d);
-        path.setAttribute("fill", "none");
-        path.setAttribute("stroke", cores[corIndex % cores.length]);
-        path.setAttribute("stroke-width", "3");
+    } catch (err) {
 
-        svg.appendChild(path);
+        console.error(err);
 
-        corIndex++;
     }
-
-    const container = document.getElementById('container-grafico');
-    container.innerHTML = "";
-    container.appendChild(svg);
 }
 
+// primeira renderização
 renderizarGraficoSVG();
+
+// refresh automático
+setInterval(renderizarGraficoSVG, 30000);
+
 </script>
 </html>
