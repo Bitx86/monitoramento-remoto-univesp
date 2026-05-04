@@ -31,7 +31,7 @@ ESP32 → MQTT (Mosquitto) → Backend (Flask) → PostgreSQL → Frontend
 - **Backend**: Python + Flask  
 - **Banco de Dados**: PostgreSQL  
 - **Protocolo de Comunicação IoT**: MQTT (Mosquitto)  
-- **Frontend**: HTML/CSS/JS  
+- **Frontend**: HTML/CSS 
 
 ---
 
