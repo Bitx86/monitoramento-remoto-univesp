@@ -108,5 +108,6 @@ Frontend → Backend → Dados → Frontend
 
 ## Referência
 
+- BDResumo: `BDResumo.md`
 - DER: `diagrama_der.png`  
 - Modelo lógico: `modelo_logico_relacional.jpeg`  
